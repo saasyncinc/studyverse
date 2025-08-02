@@ -12,7 +12,11 @@ from auth import (
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app, origins="*")
+CORS(app, 
+     origins="*",
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studyverse-production-secret-key-2024')
