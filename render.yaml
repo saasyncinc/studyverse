@@ -1,0 +1,45 @@
+# StudyVerse Render Blueprint
+# This file defines the complete infrastructure for StudyVerse
+
+services:
+  # Backend API Service
+  - type: web
+    name: studyverse-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        fromService:
+          type: web
+          name: studyverse-backend
+          envVarKey: OPENAI_API_KEY
+      - key: SECRET_KEY
+        generateValue: true
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+
+  # Frontend Static Site
+  - type: web
+    name: studyverse-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: studyverse-backend
+          property: host
+
+# Optional: Database (uncomment if needed for user data)
+# databases:
+#   - name: studyverse-db
+#     databaseName: studyverse
+#     user: studyverse_user
+
