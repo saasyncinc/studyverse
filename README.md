@@ -1,4 +1,4 @@
-# 🌟 StudyVerse - AI-Powered Learning for Every Age
+# 🌟 StudyVerse - AI-Powered Learning That Grows With You
 
 StudyVerse is a revolutionary educational platform that adapts to each learner's age and provides personalized AI-powered learning tools.
 

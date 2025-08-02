@@ -14,7 +14,10 @@ CORS(app, origins="*")
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studyverse-production-secret-key-2024')
 
 # Initialize OpenAI client
-client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+client = OpenAI(
+    api_key=os.environ.get('OPENAI_API_KEY'),
+    base_url=os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
+)
 
 # Helper functions
 def analyze_text_with_ai(text, age_group="middle"):
