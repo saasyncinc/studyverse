@@ -5,7 +5,7 @@ from flask_cors import CORS
 from datetime import datetime
 import re
 import json
-from auth import (
+from auth_postgresql import (
     create_user, authenticate_user, get_user_profile, 
     save_user_progress, get_user_progress, require_auth, generate_token
 )

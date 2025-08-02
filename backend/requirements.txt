@@ -1,9 +1,10 @@
 flask==2.3.3
 flask-cors==4.0.0
 openai==1.35.15
-gunicorn==21.2.0
-python-dotenv==1.0.1
 requests==2.31.0
-pyjwt==2.8.0
 bcrypt==4.0.1
+pyjwt==2.8.0
+gunicorn==21.2.0
+psycopg2-binary==2.9.7
+python-dotenv==1.0.1
 
