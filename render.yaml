@@ -13,11 +13,11 @@ services:
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: OPENAI_API_KEY
+      - key: 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
         sync: false  # User will add this manually
       - key: OPENAI_API_BASE
         value: https://api.openai.com/v1
-      - key: SECRET_KEY
+      - key: rnd_9X6JGj4TUe1AokjYX5SQm0DtNONr
         generateValue: true
     healthCheckPath: /api/health
     autoDeploy: false
