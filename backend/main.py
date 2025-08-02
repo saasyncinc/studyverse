@@ -1,5 +1,5 @@
 import os
-import openai
+from openai import OpenAI
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime
@@ -13,8 +13,8 @@ CORS(app, origins="*")
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studyverse-production-secret-key-2024')
 
-# Initialize OpenAI
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+# Initialize OpenAI client
+client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
 # Helper functions
 def analyze_text_with_ai(text, age_group="middle"):
@@ -42,7 +42,7 @@ def analyze_text_with_ai(text, age_group="middle"):
         }}
         """
         
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
@@ -90,7 +90,7 @@ def generate_flashcards_with_ai(text, age_group="middle", count=5):
         }}
         """
         
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5
@@ -138,7 +138,7 @@ def generate_quiz_with_ai(text, age_group="middle", count=3):
         }}
         """
         
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4
