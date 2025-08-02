@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button.jsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { Input } from '@/components/ui/input.jsx'
+import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './components/AuthContext';
+import { ThemeProvider } from './components/ThemeContext';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
+import Dashboard from './components/Dashboard';
+import SyllabusUpload from './components/SyllabusUpload';
+import ThemeCustomizer from './components/ThemeCustomizer';
+import ReportCardAnalysis from './components/ReportCardAnalysis';
+import './App.css';
 import { Textarea } from '@/components/ui/textarea.jsx'
 import { 
   Search, 
@@ -23,18 +28,49 @@ import {
   User,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  LogOut,
+  Settings,
+  BarChart3
 } from 'lucide-react'
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-function App() {
-  const [userPreferences, setUserPreferences] = useState(null)
-  const [showAgeSelection, setShowAgeSelection] = useState(false)
-  const [selectedAge, setSelectedAge] = useState('')
+// Main App Component with Authentication
+const StudyVerseApp = () => {
+  const { user, isAuthenticated, loading, logout } = useAuth();
+  const [authView, setAuthView] = useState('login'); // 'login' or 'signup'
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-600" />
+          <p className="text-gray-600">Loading StudyVerse...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return authView === 'login' ? (
+      <LoginPage onSwitchToSignup={() => setAuthView('signup')} />
+    ) : (
+      <SignupPage onSwitchToLogin={() => setAuthView('login')} />
+    );
+  }
+
+  return <MainApp user={user} onLogout={logout} />;
+};
+
+// Main Application Component (for authenticated users)
+const MainApp = ({ user, onLogout }) => {
+  const [userPreferences, setUserPreferences] = useState(user?.age_group ? { ageGroup: user.age_group } : null)
+  const [showAgeSelection, setShowAgeSelection] = useState(!user?.age_group)
+  const [selectedAge, setSelectedAge] = useState(user?.age_group || '')
   const [showConfirmation, setShowConfirmation] = useState(false)
-  const [currentView, setCurrentView] = useState('home')
+  const [currentView, setCurrentView] = useState('dashboard')
   const [searchQuery, setSearchQuery] = useState('')
   const [syllabusFile, setSyllabusFile] = useState(null)
   
@@ -81,7 +117,28 @@ function App() {
     setShowConfirmation(false)
   }
 
-  // AI API Functions
+  // Progress tracking function
+  const recordProgress = async (activityType, subject, score = null) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          activity_type: activityType,
+          subject: subject,
+          score: score,
+          completed_at: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Failed to record progress:', error);
+    }
+  };
+
+  // AI Features Functions
   const analyzeText = async () => {
     if (!textInput.trim()) return
     
@@ -106,6 +163,9 @@ function App() {
       
       const result = await response.json()
       setAnalysisResult(result)
+      
+      // Record progress
+      await recordProgress('text_analysis', 'General', null)
     } catch (err) {
       setError('Failed to analyze text. Please try again.')
     } finally {
@@ -137,9 +197,12 @@ function App() {
       }
       
       const result = await response.json()
-      setFlashcards(result.flashcards)
+      setFlashcards(result.flashcards || [])
       setCurrentFlashcard(0)
       setShowAnswer(false)
+      
+      // Record progress
+      await recordProgress('flashcards', 'General', null)
     } catch (err) {
       setError('Failed to generate flashcards. Please try again.')
     } finally {
@@ -172,6 +235,9 @@ function App() {
       
       const result = await response.json()
       setQuiz(result)
+      
+      // Record progress
+      await recordProgress('quiz', 'General', null)
     } catch (err) {
       setError('Failed to generate quiz. Please try again.')
     } finally {
@@ -299,74 +365,95 @@ function App() {
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="flex space-x-6">
               <button 
-                onClick={() => setCurrentView('home')}
-                className={`text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium ${currentView === 'home' ? 'text-teal-600 border-b-2 border-teal-600' : ''}`}
+                onClick={() => setCurrentView('dashboard')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button 
+                onClick={() => setCurrentView('learn')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'learn' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Learn
               </button>
               <button 
-                onClick={() => setCurrentView('subjects')}
-                className={`text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium ${currentView === 'subjects' ? 'text-teal-600 border-b-2 border-teal-600' : ''}`}
-              >
-                Subjects
-              </button>
-              <button 
-                onClick={() => setCurrentView('tools')}
-                className={`text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium ${currentView === 'tools' ? 'text-teal-600 border-b-2 border-teal-600' : ''}`}
-              >
-                AI Tools
-              </button>
-              <button 
                 onClick={() => setCurrentView('syllabus')}
-                className={`text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium ${currentView === 'syllabus' ? 'text-teal-600 border-b-2 border-teal-600' : ''}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'syllabus' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                My Syllabus
+                Syllabus
+              </button>
+              <button 
+                onClick={() => setCurrentView('report-card')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'report-card' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Report Card
+              </button>
+              <button 
+                onClick={() => setCurrentView('themes')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'themes' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Themes
               </button>
             </nav>
 
-            {/* Search and Profile */}
+            {/* User Info & Logout */}
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="What do you want to learn?"
-                  className="pl-10 w-64"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              <div className="text-sm text-gray-600">
+                Welcome, <span className="font-medium">{user.first_name}</span>
               </div>
-              <Button variant="outline" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Profile
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onLogout}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main>
-        {currentView === 'home' && (
+      <main className="flex-1">
+        {/* Age Selection Modal */}
+        {showAgeSelection && renderAgeSelection()}
+
+        {/* Main Content */}
+        {!showAgeSelection && userPreferences && (
           <>
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-teal-600 to-blue-600 text-white py-20">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center">
-                  <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                    StudyVerse
-                  </h1>
-                  <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                    AI-Powered Learning That Grows With You
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <Input
-                        type="text"
-                        placeholder="Search our courses and content..."
+            {currentView === 'dashboard' && <Dashboard />}
+            
+            {currentView === 'home' && (
+              <>
+                {/* Hero Section */}
+                <section className="bg-gradient-to-r from-teal-600 to-blue-600 text-white py-20">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center">
+                      <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        StudyVerse
+                      </h1>
+                      <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+                        AI-Powered Learning That Grows With You
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <Input
+                            type="text"
+                            placeholder="Search our courses and content..."
                         className="pl-10 h-12 text-gray-900"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -443,6 +530,36 @@ function App() {
               </div>
             </section>
           </>
+        )}
+
+        {currentView === 'syllabus' && (
+          <section className="py-16">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SyllabusUpload onSyllabusUploaded={(data) => {
+                console.log('Syllabus uploaded:', data);
+                // Handle syllabus data - could update user preferences or trigger content personalization
+              }} />
+            </div>
+          </section>
+        )}
+
+        {currentView === 'report-card' && (
+          <section className="py-16">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <ReportCardAnalysis onAnalysisComplete={(data) => {
+                console.log('Report card analyzed:', data);
+                // Handle analysis data - could update learning recommendations
+              }} />
+            </div>
+          </section>
+        )}
+
+        {currentView === 'themes' && (
+          <section className="py-16">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              <ThemeCustomizer />
+            </div>
+          </section>
         )}
 
         {currentView === 'tools' && (
@@ -703,7 +820,10 @@ function App() {
                       </div>
                       <h3 className="font-semibold text-xl mb-2">{subject.name}</h3>
                       <p className="text-gray-600 mb-4">{subject.description}</p>
-                      <Button className="w-full">
+                      <Button className="w-full" onClick={() => {
+                        setCurrentView('tools');
+                        setTextInput(`I want to learn about ${subject.name.toLowerCase()}`);
+                      }}>
                         Start Learning
                       </Button>
                     </CardContent>
@@ -712,6 +832,8 @@ function App() {
               </div>
             </div>
           </section>
+        )}
+          </>
         )}
       </main>
 
@@ -724,7 +846,7 @@ function App() {
               <span className="text-2xl font-bold">StudyVerse</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Personalized AI-powered learning for every age
+              AI-Powered Learning That Grows With You
             </p>
             <p className="text-sm text-gray-500">
               © 2024 StudyVerse. Built with ❤️ for learners everywhere.
@@ -734,6 +856,17 @@ function App() {
       </footer>
     </div>
   )
+}
+
+// Main App Wrapper with Authentication and Theme Providers
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <StudyVerseApp />
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
 export default App
