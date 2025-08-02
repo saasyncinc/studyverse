@@ -14,14 +14,32 @@ CORS(app, origins="*")
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studyverse-production-secret-key-2024')
 
 # Initialize OpenAI client
-client = OpenAI(
-    api_key=os.environ.get('OPENAI_API_KEY'),
-    base_url=os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
-)
+client = None
+try:
+    if os.environ.get('OPENAI_API_KEY'):
+        client = OpenAI(
+            api_key=os.environ.get('OPENAI_API_KEY'),
+            base_url=os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
+        )
+        print("✅ OpenAI client initialized successfully")
+    else:
+        print("⚠️ OpenAI API key not found - AI features will be disabled")
+except Exception as e:
+    print(f"⚠️ OpenAI client initialization failed: {e}")
+    client = None
 
 # Helper functions
 def analyze_text_with_ai(text, age_group="middle"):
     """Analyze text using OpenAI for reading level and complexity"""
+    if not client:
+        return {
+            "reading_level": "Analysis unavailable",
+            "complexity_score": 5,
+            "key_concepts": ["OpenAI service unavailable"],
+            "suggestions": ["Please configure OpenAI API key to enable AI analysis"],
+            "estimated_time": "N/A"
+        }
+    
     try:
         age_context = {
             "preschool": "2-5 year olds, very simple language",
