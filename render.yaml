@@ -1,4 +1,4 @@
-# StudyVerse Render Blueprint - Fixed for Complete Deployment
+# StudyVerse Render Blueprint - Fixed Scaling Configuration
 # AI-Powered Learning That Grows With You
 
 services:
@@ -20,9 +20,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
     healthCheckPath: /api/health
-    scaling:
-      minInstances: 1
-      maxInstances: 3
+    autoDeploy: false
 
   # Frontend Static Site - Deploys after backend
   - type: web
@@ -45,6 +43,7 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+    autoDeploy: false
 
 # CRITICAL DEPLOYMENT NOTES:
 # 1. Backend service MUST be deployed first to generate API URL
