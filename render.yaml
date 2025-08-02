@@ -1,5 +1,5 @@
-# StudyVerse Render Blueprint
-# This file defines the complete infrastructure for StudyVerse
+# StudyVerse Render Blueprint - Updated for Crash-Free Deployment
+# AI-Powered Learning That Grows With You
 
 services:
   # Backend API Service
@@ -8,38 +8,58 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn main:app
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT
+    plan: starter
     envVars:
       - key: FLASK_ENV
         value: production
       - key: OPENAI_API_KEY
-        fromService:
-          type: web
-          name: studyverse-backend
-          envVarKey: OPENAI_API_KEY
+        sync: false  # User will add this manually
+      - key: OPENAI_API_BASE
+        value: https://api.openai.com/v1
       - key: SECRET_KEY
         generateValue: true
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health
     scaling:
       minInstances: 1
       maxInstances: 3
 
-  # Frontend Static Site
+  # Frontend Static Site  
   - type: web
     name: studyverse-frontend
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    plan: starter
     envVars:
       - key: VITE_API_URL
         fromService:
           type: web
           name: studyverse-backend
           property: host
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
 
-# Optional: Database (uncomment if needed for user data)
-# databases:
-#   - name: studyverse-db
-#     databaseName: studyverse
-#     user: studyverse_user
+# Environment Variables Documentation
+# Required for full functionality:
+# - OPENAI_API_KEY: Your OpenAI API key for AI features
+# 
+# Optional for enhanced features:
+# - ELEVENLABS_API_KEY: For voice tutoring (Phase 2)
+# - DATABASE_URL: For user data persistence (Phase 2)
+
+# Deployment Notes:
+# 1. Frontend will build successfully with PostCSS and TailwindCSS fixes
+# 2. Backend includes graceful error handling for missing OpenAI API key
+# 3. Health check endpoint available at /api/health for monitoring
+# 4. CORS enabled for frontend-backend communication
+# 5. All services configured for crash-resistant deployment
 

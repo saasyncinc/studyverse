@@ -18,7 +18,7 @@
 1. **Create New Repository**
    - Go to https://github.com
    - Click "New repository"
-   - Name: `studyverse-platform`
+   - Name: `studyverse`
    - Make it **Public** (required for Render free tier)
    - Click "Create repository"
 
@@ -27,7 +27,7 @@
    - Upload all files to your GitHub repository
    - Ensure this structure:
    ```
-   studyverse-platform/
+   studyverse/
    ├── backend/
    │   ├── main.py
    │   ├── requirements.txt
@@ -51,7 +51,7 @@
 
 2. **Connect Repository**
    - Select "Connect a repository"
-   - Choose your `studyverse-platform` repository
+   - Choose your `studyverse` repository
    - Click "Connect"
 
 3. **Configure Blueprint**
