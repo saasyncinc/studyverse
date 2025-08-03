@@ -22,7 +22,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false
     healthCheckPath: /api/health
-    autoDeployTrigger: "on"
+    autoDeployTrigger: off
 
   # Frontend Static Site (Based on your working configuration)
   - type: web
@@ -40,7 +40,7 @@ services:
           type: web
           name: studyverse-backend
           property: host
-    autoDeployTrigger: "on"
+    autoDeployTrigger: off
 
 version: "1"
 
