@@ -1,33 +1,46 @@
+# StudyVerse Complete Deployment Blueprint
+# Fixed based on working production configuration
+
 services:
+  # Backend API Service (MISSING from your current setup)
   - type: web
     name: studyverse-backend
     runtime: python
+    repo: https://github.com/saasyncinc/studyverse
+    branch: main
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn main:app --bind 0.0.0.0:$PORT
-    plan: professional
+    plan: starter
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: OPENAI_API_KEY
-        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
         value: postgresql://toaksiedatabase_user:eVff8p6cw6Trj3s8wGcdlsHx0Rk8BICM@dpg-d263urvfte5s73e8sga0-a/toaksiedatabase
+      - key: OPENAI_API_KEY
+        sync: false
     healthCheckPath: /api/health
+    autoDeployTrigger: "on"
 
+  # Frontend Static Site (Based on your working configuration)
   - type: web
     name: studyverse-frontend
     runtime: static
+    repo: https://github.com/saasyncinc/studyverse
+    branch: main
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    plan: hobby
+    staticPublishPath: dist
+    plan: starter
     envVars:
       - key: VITE_API_URL
         fromService:
           type: web
           name: studyverse-backend
           property: host
+    autoDeployTrigger: "on"
+
+version: "1"
 
